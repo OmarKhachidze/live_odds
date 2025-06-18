@@ -1,3 +1,15 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.inputStream())
+    }
+}
+
+val minSdkVersion: Int = localProperties.getProperty("flutter.minSdkVersion")?.toIntOrNull() ?: flutter.minSdkVersion
+val ndk: String = localProperties.getProperty("flutter.ndkVersion") ?: flutter.ndkVersion
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -8,7 +20,7 @@ plugins {
 android {
     namespace = "com.task.live_odds"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = ndk
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -24,7 +36,7 @@ android {
         applicationId = "com.task.live_odds"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
