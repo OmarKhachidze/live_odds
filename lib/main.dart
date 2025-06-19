@@ -1,11 +1,18 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:live_odds/presentation/providers/matches_provider.dart';
 import 'package:live_odds/presentation/screens/matches_screen.dart';
+import 'package:provider/provider.dart';
+
+import 'data/repository/odds_repository_impl.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => OddsProvider(ImplOddsRepository()),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
