@@ -2,6 +2,8 @@ import 'package:live_odds/domain/models/sport.dart';
 
 import 'betting_option.dart';
 
+enum OddsChange { increase, decrease, none }
+
 class SportMatch {
   SportMatch({
     required this.sport,
@@ -10,6 +12,7 @@ class SportMatch {
     required this.matchStartTime,
     required this.currentScore,
     required this.bettingOptions,
+    required this.oddsChange ,
   });
 
   final Sport sport;
@@ -19,6 +22,28 @@ class SportMatch {
   final String currentScore;
   final List<BettingOption> bettingOptions;
 
+  final OddsChange oddsChange;
+
+  SportMatch copyWith({
+    Sport? sport,
+    String? competitorA,
+    String? competitorB,
+    DateTime? matchStartTime,
+    String? currentScore,
+    List<BettingOption>? bettingOptions,
+    OddsChange? oddsChange,
+  }) {
+    return SportMatch(
+      sport: sport ?? this.sport,
+      competitorA: competitorA ?? this.competitorA,
+      competitorB: competitorB ?? this.competitorB,
+      matchStartTime: matchStartTime ?? this.matchStartTime,
+      currentScore: currentScore ?? this.currentScore,
+      bettingOptions: bettingOptions ?? this.bettingOptions,
+      oddsChange: oddsChange ?? this.oddsChange,
+    );
+  }
+
   @override
   String toString() {
     return '''
@@ -27,6 +52,7 @@ class SportMatch {
       Start Time: $matchStartTime
       Score: $currentScore
       Betting Options: ${bettingOptions.join(', ')}
+      Odds Change: $oddsChange
 ''';
   }
 }

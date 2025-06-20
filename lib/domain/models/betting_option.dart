@@ -4,10 +4,25 @@ class BettingOption {
   BettingOption({
     required this.type,
     required this.description,
-    required this.odds,
+    this.odds,
   });
 
   final BettingType type;
   final String description;
-  double? odds;
+  final double? odds;
+
+  BettingOption copyWith({
+    BettingType? type,
+    String? description,
+    double? odds,
+  }) {
+    return BettingOption(
+      type: type ?? this.type,
+      description: description ?? this.description,
+      odds: odds ?? this.odds,
+    );
+  }
+
+  @override
+  String toString() => '$description: ${odds?.toStringAsFixed(2) ?? 'N/A'}';
 }

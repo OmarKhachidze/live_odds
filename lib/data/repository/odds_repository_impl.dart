@@ -20,4 +20,17 @@ class ImplOddsRepository implements OddsRepository {
       BettingOption(type: BettingType.total, description: 'U2.5', odds: null),
     ]);
   }
+
+  @override
+  Stream<List<SportMatch>> getOddsStream(List<SportMatch> baseMatches) async* {
+    while (true) {
+      await Future.delayed(const Duration(seconds: 5));
+
+      final updatedMatches = baseMatches.map((match) {
+        return MatchClient().updateOdds(match);
+      }).toList();
+
+      yield updatedMatches;
+    }
+  }
 }

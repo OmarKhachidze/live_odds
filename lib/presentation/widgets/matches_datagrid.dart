@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:live_odds/core/extensions/datetime_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
 import '../../core/constants.dart';
+import '../../core/extensions/datetime_extension.dart';
+import '../../domain/models/sport_match.dart';
 import '../providers/matches_provider.dart';
 import 'load_more_datagrid.dart';
 
@@ -24,7 +25,7 @@ class MatchesDataGrid extends StatefulWidget {
 }
 
 class _MatchesDataGridState extends State<MatchesDataGrid> {
-  Map<String, double> columnWidths = {
+  final Map<String, double> columnWidths = {
     MatchColumn.sport.name: 80,
     MatchColumn.competitors.name: 100,
     MatchColumn.time.name: 130,
@@ -34,8 +35,12 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
 
   @override
   void initState() {
-    widget.dataGridSource.initData();
     super.initState();
+    context.read<OddsProvider>().getMatchesAndStartOdds(dataGridPageSize);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.dataGridSource.initData();
+      widget.dataGridSource.listenForOddsUpdates();
+    });
   }
 
   @override
@@ -51,7 +56,6 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
         MatchColumn.score.name: 'Score',
         MatchColumn.odds.name: 'Odds',
       },
-      onCellTap: (details) {},
       columnWidths: columnWidths,
     );
   }
@@ -60,8 +64,9 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
 class SportMatchesDataSource extends DataGridSource {
   SportMatchesDataSource(this.context);
 
+  final Map<int, List<double?>> _previousOddsMap = {};
+  final Map<int, OddsChange> _oddsChangeMap = {};
   final BuildContext context;
-
   final List<DataGridRow> _dataGridRows = [];
 
   @override
@@ -70,27 +75,14 @@ class SportMatchesDataSource extends DataGridSource {
   void initData() {
     _addMoreRows();
     _appendNewRows(fromIndex: 0);
+    notifyListeners();
   }
 
-  @override
-  DataGridRowAdapter? buildRow(DataGridRow row) {
-    return DataGridRowAdapter(
-      cells: row.getCells().map<Widget>((cell) {
-        return Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 13.0),
-          child: cell.value is Widget
-              ? cell.value
-              : Text(
-                  cell.value.toString(),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontSize: 11.0),
-                  overflow: TextOverflow.ellipsis,
-                ),
-        );
-      }).toList(),
-    );
+  void listenForOddsUpdates() {
+    final provider = context.read<OddsProvider>();
+    provider.addListener(() {
+      _updateOddsCells(provider.matches);
+    });
   }
 
   @override
@@ -102,11 +94,14 @@ class SportMatchesDataSource extends DataGridSource {
     notifyListeners();
   }
 
+  void _addMoreRows() {
+    context.read<OddsProvider>().getMatches(dataGridPageSize);
+  }
+
   void _appendNewRows({required int fromIndex}) {
+    final matches = context.read<OddsProvider>().matches;
     _dataGridRows.addAll(
-      context.read<OddsProvider>().matches.sublist(fromIndex).map<DataGridRow>((
-        match,
-      ) {
+      matches.sublist(fromIndex).map((match) {
         return DataGridRow(
           cells: [
             DataGridCell<String>(
@@ -137,7 +132,78 @@ class SportMatchesDataSource extends DataGridSource {
     );
   }
 
-  void _addMoreRows() {
-    context.read<OddsProvider>().getMatches(dataGridPageSize);
+  void _updateOddsCells(List<SportMatch> matches) {
+    for (int i = 0; i < matches.length; i++) {
+      final match = matches[i];
+      final currentOdds = match.bettingOptions.map((e) => e.odds).toList();
+
+      OddsChange change = match.oddsChange;
+      final previousOdds = _previousOddsMap[i];
+      _oddsChangeMap[i] = change;
+
+      if (previousOdds != null && previousOdds.length == currentOdds.length) {
+        for (int j = 0; j < currentOdds.length; j++) {
+          if (currentOdds[j]! > previousOdds[j]!) {
+            change = OddsChange.increase;
+            break;
+          } else if (currentOdds[j]! < previousOdds[j]!) {
+            change = OddsChange.decrease;
+            break;
+          }
+        }
+      }
+
+      // Save current odds and change type
+      _previousOddsMap[i] = currentOdds;
+      _oddsChangeMap[i] = change;
+
+      // Update only the odds cell
+      _dataGridRows[i].getCells()[4] = DataGridCell<String>(
+        columnName: MatchColumn.odds.name,
+        value: match.bettingOptions
+            .map((e) => '${e.description}:${e.odds}')
+            .join(' • '),
+      );
+
+      notifyDataSourceListeners(rowColumnIndex: RowColumnIndex(i, 4));
+    }
+  }
+
+  Color? _setColumnColor(DataGridCell<dynamic> cell, int rowIndex) {
+    if (cell.columnName != MatchColumn.odds.name) return null;
+
+    final change =
+        _oddsChangeMap[rowIndex] ??
+        context.read<OddsProvider>().matches[rowIndex].oddsChange;
+
+    return switch (change) {
+      OddsChange.increase => Colors.green.withValues(alpha: 0.2),
+      OddsChange.decrease => Colors.red.withValues(alpha: 0.2),
+      OddsChange.none => Colors.transparent,
+    };
+  }
+
+  @override
+  DataGridRowAdapter? buildRow(DataGridRow row) {
+    final rowIndex = _dataGridRows.indexOf(row);
+
+    return DataGridRowAdapter(
+      cells: row.getCells().map<Widget>((cell) {
+        return Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 13.0),
+          color: _setColumnColor(cell, rowIndex),
+          child: cell.value is Widget
+              ? cell.value
+              : Text(
+                  cell.value.toString(),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontSize: 11.0),
+                  overflow: TextOverflow.ellipsis,
+                ),
+        );
+      }).toList(),
+    );
   }
 }

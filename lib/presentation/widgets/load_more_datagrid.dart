@@ -14,7 +14,6 @@ class LoadMoreDataGrid extends StatefulWidget {
     required this.columnNames,
     required this.columnWidths,
     required this.columnLabels,
-    required this.onCellTap,
     super.key,
   });
 
@@ -23,7 +22,6 @@ class LoadMoreDataGrid extends StatefulWidget {
   final List<String> columnNames;
   final Map<String, double> columnWidths;
   final Map<String, String> columnLabels;
-  final void Function(DataGridCellTapDetails) onCellTap;
 
   @override
   State<LoadMoreDataGrid> createState() => _LoadMoreDataGridState();
@@ -84,7 +82,6 @@ class _LoadMoreDataGridState extends State<LoadMoreDataGrid> {
       },
       columnWidthMode: ColumnWidthMode.fill,
       selectionMode: SelectionMode.multiple,
-      onCellTap: widget.onCellTap,
       columns: _buildDataGridColumns(context),
       allowColumnsResizing: true,
       onColumnResizeUpdate: (ColumnResizeUpdateDetails details) {
