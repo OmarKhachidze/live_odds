@@ -50,7 +50,7 @@ Pagination is integrated into the Syncfusion `DataGrid`, loading more rows on de
 
 ## ▶️ App Demo
 
-> 📽️ [Demo 1](assets/demo.gif), [Demo 2](assets/demo2.gif)
+> 📽️ [Demo 1](assets/demo.gif), [Demo 2](assets/demoV2.gif)
 > A quick walkthrough showing real-time odds updates, pagination, sorting, and responsive UI.
 
 ---
