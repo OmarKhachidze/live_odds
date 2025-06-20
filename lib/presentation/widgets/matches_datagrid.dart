@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
@@ -43,7 +45,7 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
       widget.dataGridSource.listenForOddsUpdates();
 
       // Restore selection from Hive
-      _restoreSelectedRows();
+      // _restoreSelectedRows();
     });
   }
 
@@ -52,6 +54,7 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
     final ids =
         selected
             ?.map((row) {
+              log('${widget.dataGridSource.rows.indexOf(row)}');
               return widget.dataGridSource.rows.indexOf(row);
             })
             .whereType<int>()
@@ -59,16 +62,6 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
         [];
 
     Hive.box<List<int>>('selected_match_ids').put('ids', ids);
-  }
-
-  void _restoreSelectedRows() {
-    final selectedIds = Hive.box<List<int>>('selected_match_ids')
-        .get('ids', defaultValue: [])!
-        .where((e) => e < widget.dataGridSource.rows.length);
-
-    widget.dataGridController?.selectedRows = selectedIds
-        .map((e) => widget.dataGridSource.rows[e])
-        .toList();
   }
 
   @override
@@ -91,12 +84,21 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
 }
 
 class SportMatchesDataSource extends DataGridSource {
-  SportMatchesDataSource(this.context);
+  SportMatchesDataSource(this.context, this.controller);
 
   final Map<int, List<double?>> _previousOddsMap = {};
   final Map<int, OddsChange> _oddsChangeMap = {};
   final BuildContext context;
+  final DataGridController controller;
   final List<DataGridRow> _dataGridRows = [];
+
+  void _restoreSelectedRows() {
+    final selectedIds = Hive.box<List<int>>(
+      'selected_match_ids',
+    ).get('ids', defaultValue: [])!.where((e) => e < rows.length);
+
+    controller.selectedRows = selectedIds.map((e) => rows[e]).toList();
+  }
 
   @override
   List<DataGridRow> get rows => _dataGridRows;
@@ -104,6 +106,7 @@ class SportMatchesDataSource extends DataGridSource {
   void initData() {
     _addMoreRows();
     _appendNewRows(fromIndex: 0);
+    _restoreSelectedRows();
     notifyListeners();
   }
 
@@ -120,6 +123,7 @@ class SportMatchesDataSource extends DataGridSource {
     await Future.delayed(const Duration(milliseconds: 500));
     _addMoreRows();
     _appendNewRows(fromIndex: previousCount);
+    _restoreSelectedRows();
     notifyListeners();
   }
 

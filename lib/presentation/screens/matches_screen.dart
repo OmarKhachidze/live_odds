@@ -15,7 +15,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
   @override
   void initState() {
-    _sportMatchesDataSource = SportMatchesDataSource(context);
+    _sportMatchesDataSource = SportMatchesDataSource(context, _dataGridController);
     super.initState();
   }
 
