@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
-
 import '../../domain/models/betting_option.dart';
 import '../../domain/models/sport.dart';
 import '../../domain/models/sport_match.dart';
@@ -25,7 +23,8 @@ class MatchClient {
   List<SportMatch> getMatches(int count, List<BettingOption> templateOptions) {
     return List.generate(
       count,
-      (_) => _generateRandomMatch(_cloneWithNewOdds(templateOptions)),
+      (index) =>
+          _generateRandomMatch(index, _cloneWithNewOdds(templateOptions)),
     );
   }
 
@@ -35,7 +34,7 @@ class MatchClient {
     }).toList();
   }
 
-  SportMatch _generateRandomMatch(List<BettingOption> bettingOptions) {
+  SportMatch _generateRandomMatch(int id, List<BettingOption> bettingOptions) {
     final sport = sports[_random.nextInt(sports.length)];
 
     final competitorA = competitors[_random.nextInt(competitors.length)];
@@ -48,8 +47,9 @@ class MatchClient {
       Duration(minutes: _random.nextInt(10000)),
     );
     final change = _generateRandomChange();
-    debugPrint('$change');
+
     return SportMatch(
+      id: id,
       sport: sport,
       competitorA: competitorA,
       competitorB: competitorB,
@@ -71,7 +71,6 @@ class MatchClient {
   OddsChange _generateRandomChange() {
     final ind = _random.nextInt(2);
     return OddsChange.values[ind];
-
   }
 
   String _generateRandomScore(Sport sport) {

@@ -19,7 +19,6 @@ class OddsProvider extends ChangeNotifier {
   void getMatchesAndStartOdds(int count) {
     _matches.clear();
     _matches.addAll(_source.getMatches(count));
-
     _subscription?.cancel();
     _subscription = _source.getOddsStream(_matches).listen((updatedMatches) {
       _matches

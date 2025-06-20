@@ -6,6 +6,10 @@ import '../../core/constants.dart';
 import 'matches_datagrid.dart';
 
 enum LoadState { loading, completed }
+typedef SelectionChangedCallback = void Function(
+    List<DataGridRow> addedRows,
+    List<DataGridRow> removedRows,
+    );
 
 class LoadMoreDataGrid extends StatefulWidget {
   const LoadMoreDataGrid({
@@ -14,6 +18,7 @@ class LoadMoreDataGrid extends StatefulWidget {
     required this.columnNames,
     required this.columnWidths,
     required this.columnLabels,
+    required this.onSelectionChanged,
     super.key,
   });
 
@@ -22,6 +27,7 @@ class LoadMoreDataGrid extends StatefulWidget {
   final List<String> columnNames;
   final Map<String, double> columnWidths;
   final Map<String, String> columnLabels;
+  final void Function()? onSelectionChanged;
 
   @override
   State<LoadMoreDataGrid> createState() => _LoadMoreDataGridState();
@@ -64,6 +70,9 @@ class _LoadMoreDataGridState extends State<LoadMoreDataGrid> {
   @override
   Widget build(BuildContext context) {
     return SfDataGrid(
+      onSelectionChanged: (added, removed) {
+        widget.onSelectionChanged?.call();
+      },
       allowFiltering: true,
       controller: widget.dataGridController,
       source: widget.dataGridSource,

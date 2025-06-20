@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:live_odds/presentation/providers/matches_provider.dart';
 import 'package:live_odds/presentation/screens/matches_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'data/repository/odds_repository_impl.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
   runApp(
     ChangeNotifierProvider(
       create: (_) => OddsProvider(ImplOddsRepository()),
@@ -25,7 +27,30 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MatchesScreen(),
+      // home: const MatchesScreen(),
+      home: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: FutureBuilder(
+            future: Future.wait([Hive.openBox<List<int>>('selected_match_ids')]),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.error != null) {
+                  return const Scaffold(
+                    body: Center(child: Text('Something went wrong :/')),
+                  );
+                } else {
+                  return const MatchesScreen();
+                }
+              } else {
+                return const Scaffold(
+                  body: Center(child: Text('Opening Hive...')),
+                );
+              }
+            },
+          ),
+        ),
+      ),
     );
   }
 }

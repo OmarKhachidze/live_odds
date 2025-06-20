@@ -6,25 +6,27 @@ enum OddsChange { increase, decrease, none }
 
 class SportMatch {
   SportMatch({
+    required this.id,
     required this.sport,
     required this.competitorA,
     required this.competitorB,
     required this.matchStartTime,
     required this.currentScore,
     required this.bettingOptions,
-    required this.oddsChange ,
+    required this.oddsChange,
   });
 
+  final int id;
   final Sport sport;
   final String competitorA;
   final String competitorB;
   final DateTime matchStartTime;
   final String currentScore;
   final List<BettingOption> bettingOptions;
-
   final OddsChange oddsChange;
 
   SportMatch copyWith({
+    int? id,
     Sport? sport,
     String? competitorA,
     String? competitorB,
@@ -34,6 +36,7 @@ class SportMatch {
     OddsChange? oddsChange,
   }) {
     return SportMatch(
+      id: id ?? this.id,
       sport: sport ?? this.sport,
       competitorA: competitorA ?? this.competitorA,
       competitorB: competitorB ?? this.competitorB,
@@ -47,6 +50,7 @@ class SportMatch {
   @override
   String toString() {
     return '''
+      ID: $id
       Sport: ${sport.icon} ${sport.value}
       Competitors: $competitorA vs $competitorB
       Start Time: $matchStartTime

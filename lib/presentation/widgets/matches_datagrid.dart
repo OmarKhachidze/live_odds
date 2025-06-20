@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
@@ -40,12 +41,40 @@ class _MatchesDataGridState extends State<MatchesDataGrid> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.dataGridSource.initData();
       widget.dataGridSource.listenForOddsUpdates();
+
+      // Restore selection from Hive
+      _restoreSelectedRows();
     });
+  }
+
+  void _saveSelectedRows() {
+    final selected = widget.dataGridController?.selectedRows;
+    final ids =
+        selected
+            ?.map((row) {
+              return widget.dataGridSource.rows.indexOf(row);
+            })
+            .whereType<int>()
+            .toList() ??
+        [];
+
+    Hive.box<List<int>>('selected_match_ids').put('ids', ids);
+  }
+
+  void _restoreSelectedRows() {
+    final selectedIds = Hive.box<List<int>>('selected_match_ids')
+        .get('ids', defaultValue: [])!
+        .where((e) => e < widget.dataGridSource.rows.length);
+
+    widget.dataGridController?.selectedRows = selectedIds
+        .map((e) => widget.dataGridSource.rows[e])
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return LoadMoreDataGrid(
+      onSelectionChanged: _saveSelectedRows,
       dataGridController: widget.dataGridController,
       dataGridSource: widget.dataGridSource,
       columnNames: columnWidths.keys.toList(),
@@ -134,6 +163,7 @@ class SportMatchesDataSource extends DataGridSource {
 
   void _updateOddsCells(List<SportMatch> matches) {
     for (int i = 0; i < matches.length; i++) {
+      if (i >= _dataGridRows.length) break;
       final match = matches[i];
       final currentOdds = match.bettingOptions.map((e) => e.odds).toList();
 
